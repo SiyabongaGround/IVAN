@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="theme-color" content="#2d5f9a" />
+<title>IVAN — Academic Navigator</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent: #2d5f9a;
+    --urgent-bg: #fde1e1;
+    --urgent-text: #a02020;
+    --soon-bg: #fdf0d9;
+    --soon-text: #8a5a0a;
+    --later-bg: #eef2f7;
+    --later-text: #4b5563;
+    --wa-bubble: #DCF8C6;
+    --wa-screen: #E5DDD5;
+    --wa-text: #0b1f12;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --surface: #1a1d23;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --border: #2a2f38;
+      --later-bg: #262a31;
+      --later-text: #c2c7d0;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app {
+    max-width: 480px; margin: 0 auto; padding: 20px 16px 40px;
+    min-height: 100vh;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+  }
+  .logo {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--accent); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 15px;
+  }
+  h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  .tag { margin: 0; font-size: 12px; color: var(--muted); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; margin-bottom: 14px;
+  }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  input[type="text"], input[type="url"], textarea {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg); color: var(--text);
+    font-size: 14px; font-family: inherit;
+  }
+  textarea { min-height: 90px; resize: vertical; font-family: ui-monospace, monospace; font-size: 12px; }
+  button {
+    padding: 10px 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 14px; cursor: pointer;
+    font-family: inherit; font-weight: 500;
+  }
+  button:hover { background: var(--bg); }
+  button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  button.primary:hover { opacity: 0.92; }
+  button:disabled { opacity: 0.5; cursor: wait; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wa-screen {
+    background: var(--wa-screen);
+    padding: 16px; border-radius: 14px;
+    margin-bottom: 14px;
+  }
+  .wa-bubble {
+    background: var(--wa-bubble); color: var(--wa-text);
+    padding: 12px 14px; border-radius: 10px;
+    white-space: pre-wrap; font-size: 14px; line-height: 1.55;
+    max-width: 90%;
+  }
+  .deadline-row {
+    padding: 12px 0; border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .deadline-row:first-child { border-top: none; padding-top: 0; }
+  .chip {
+    display: inline-block; padding: 3px 9px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .chip.urgent { background: var(--urgent-bg); color: var(--urgent-text); }
+  .chip.soon { background: var(--soon-bg); color: var(--soon-text); }
+  .chip.later { background: var(--later-bg); color: var(--later-text); }
+  .deadline-info { flex: 1; min-width: 0; }
+  .deadline-title { font-size: 14px; font-weight: 500; }
+  .deadline-course { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .section-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px; font-weight: 600; }
+  .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 20px 0; }
+  .status { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .error { color: #a02020; font-size: 13px; margin-top: 8px; }
+  details { margin-top: 10px; }
+  details summary { font-size: 13px; color: var(--muted); cursor: pointer; padding: 4px 0; }
+  .small { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .small code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; }
+  .stat-num { font-size: 20px; font-weight: 600; }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">IV</div>
+  <div>
+    <h1>IVAN</h1>
+    <p class="tag">Your academic navigator</p>
+  </div>
+</header>
+
+<div id="setup" class="card" style="display:none;">
+  <p class="section-title">Setup</p>
+  <label for="feed-url">Paste your Amathuba calendar feed URL</label>
+  <input id="feed-url" type="url" placeholder="https://amathuba.uct.ac.za/d2l/le/calendar/feed/…/feed.ics?token=…" />
+  <div class="btn-row" style="margin-top: 10px;">
+    <button class="primary" id="save-url">Save & sync</button>
+  </div>
+  <details>
+    <summary>How to get this URL</summary>
+    <p class="small">
+      1. Open Amathuba → Calendar<br>
+      2. Click Settings → tick "Enable Calendar Feeds" → Save<br>
+      3. Click the Subscribe button<br>
+      4. Choose "All Calendars and Tasks"<br>
+      5. Copy the URL (ends in <code>.ics</code>)<br><br>
+      This URL is private — it has an embedded auth token. Only stored in your browser.
+    </p>
+  </details>
+</div>
+
+<div id="dashboard" style="display:none;">
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-num" id="stat-urgent">0</div><div class="stat-label">Urgent</div></div>
+    <div class="stat"><div class="stat-num" id="stat-soon">0</div><div class="stat-label">Soon</div></div>
+    <div class="stat"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+  </div>
+
+  <p class="section-title">Today's brief</p>
+  <div class="wa-screen"><div class="wa-bubble" id="brief"></div></div>
+  <div class="btn-row" style="margin-bottom: 18px;">
+    <button class="primary" id="sync">Sync now</button>
+    <button id="copy">Copy brief</button>
+    <button id="change-url">Change URL</button>
+  </div>
+  <p class="status" id="status"></p>
+  <p class="error" id="error" style="display:none;"></p>
+
+  <p class="section-title" style="margin-top: 24px;">All deadlines</p>
+  <div class="card" id="deadlines"></div>
+</div>
+
+</div>
+
+<script>
+const STORAGE_KEY = 'ivan_feed_url_v1';
+const CACHE_KEY = 'ivan_events_cache_v1';
+const CACHE_TIME = 'ivan_last_sync_v1';
+
+const PROXIES = [
+  (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
+  (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+];
+
+const $ = (id) => document.getElementById(id);
+const daysUntil = (iso) => {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(iso); d.setHours(0,0,0,0);
+  return Math.round((d - today) / 86400000);
+};
+
+function parseICS(text) {
+  const events = [];
+  const lines = text.replace(/\r\n[ \t]/g, '').split(/\r?\n/);
+  let cur = null;
+  for (const line of lines) {
+    if (line === 'BEGIN:VEVENT') cur = {};
+    else if (line === 'END:VEVENT') {
+      if (cur && cur.date && cur.title) events.push(cur);
+      cur = null;
+    } else if (cur) {
+      const colonIdx = line.indexOf(':');
+      if (colonIdx === -1) continue;
+      const key = line.slice(0, colonIdx).split(';')[0];
+      const val = unescapeICS(line.slice(colonIdx + 1));
+      if (key === 'SUMMARY') cur.title = val;
+      else if (key === 'DESCRIPTION') cur.description = val;
+      else if (key === 'LOCATION') cur.location = val;
+      else if (key === 'DTSTART' || key === 'DTEND') {
+        const dateKey = key === 'DTSTART' ? 'dateStart' : 'dateEnd';
+        cur[dateKey] = parseICSDate(val);
+        if (key === 'DTSTART' || !cur.date) cur.date = cur[dateKey];
+      } else if (key === 'CATEGORIES') cur.categories = val;
+      else if (key === 'UID') cur.uid = val;
+    }
+  }
+  return events;
+}
+
+function unescapeICS(s) {
+  return s.replace(/\\n/g, '\n').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
+}
+
+function parseICSDate(s) {
+  s = s.trim();
+  if (/^\d{8}$/.test(s)) {
+    return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+  }
+  const m = s.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z?)$/);
+  if (m) {
+    const [, y, mo, d, h, mi, se, z] = m;
+    const iso = `${y}-${mo}-${d}T${h}:${mi}:${se}${z ? 'Z' : ''}`;
+    return new Date(iso).toISOString().slice(0, 10);
+  }
+  const parsed = new Date(s);
+  if (!isNaN(parsed)) return parsed.toISOString().slice(0, 10);
+  return null;
+}
+
+function extractCourseCode(text) {
+  if (!text) return null;
+  const m = text.match(/\b[A-Z]{3}\d{3,4}[A-Z]?\b/);
+  return m ? m[0] : null;
+}
+
+function cleanTitle(t) {
+  return t
+    .replace(/\s*-?\s*(End Date|Start Date|Due Date|Availability Ends?)\s*$/i, '')
+    .replace(/\s*is due\s*$/i, '')
+    .trim();
+}
+
+function guessLoad(title) {
+  const t = title.toLowerCase();
+  if (/quiz|test/.test(t)) return 2;
+  if (/exam|project|essay|report/.test(t)) return 4;
+  if (/assignment|assessment/.test(t)) return 3;
+  if (/reading|lecture|tutorial|discussion/.test(t)) return 1;
+  return 2;
+}
+
+function normaliseEvents(raw) {
+  return raw.map(e => {
+    const title = cleanTitle(e.title);
+    const course = extractCourseCode(e.title) || extractCourseCode(e.categories) || extractCourseCode(e.description) || 'Course';
+    return {
+      course,
+      title: title.replace(course, '').replace(/^[\s\-:]+|[\s\-:]+$/g, '') || title,
+      date: e.date,
+      load: guessLoad(title),
+    };
+  }).filter(e => {
+    const du = daysUntil(e.date);
+    return du >= -1;
+  });
+}
+
+function generateBrief(events) {
+  const upcoming = [...events]
+    .filter(e => {
+      const du = daysUntil(e.date);
+      return du >= 0 && du <= 4;
+    })
+    .sort((a,b) => daysUntil(a.date) - daysUntil(b.date));
+
+  let msg = '📚 IVAN Daily Brief\n';
+  if (!upcoming.length) {
+    msg += 'No deadlines in the next 4 days ✨\n\n';
+    msg += '🎯 Focus today: Review past lecture notes or get ahead on next week\'s readings (1h recommended)\n\n';
+    msg += 'Use the quiet window wisely.';
+    return msg;
+  }
+  msg += `You've got ${upcoming.length} upcoming deadline${upcoming.length > 1 ? 's' : ''}:\n`;
+  upcoming.slice(0, 3).forEach(d => {
+    const du = daysUntil(d.date);
+    const icon = du <= 2 ? '🔴' : '🟡';
+    const when = du === 0 ? 'due today' : du === 1 ? 'due tomorrow' : `due in ${du} days`;
+    msg += `${icon} ${d.course} ${d.title} – ${when}\n`;
+  });
+  const top = upcoming[0];
+  const hours = top.load >= 4 ? '3h' : top.load >= 2 ? '2h' : '1h';
+  msg += `\n🎯 Focus today: Start/continue ${top.course} ${top.title} (${hours} recommended)\n\n`;
+  const du0 = daysUntil(top.date);
+  msg += du0 <= 1 ? 'Push through—you\'ve got this.' : 'You\'re on track—keep it up.';
+  return msg;
+}
+
+async function fetchFeed(url) {
+  let lastErr;
+  try {
+    const res = await fetch(url);
+    if (res.ok) return await res.text();
+    throw new Error('HTTP ' + res.status);
+  } catch (e) { lastErr = e; }
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy(url));
+      if (res.ok) return await res.text();
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('All fetch attempts failed');
+}
+
+function dayLabel(du) {
+  if (du < 0) return `${Math.abs(du)}d ago`;
+  if (du === 0) return 'today';
+  if (du === 1) return 'tomorrow';
+  return `in ${du}d`;
+}
+
+function chipClass(du) {
+  if (du < 0) return 'later';
+  if (du <= 2) return 'urgent';
+  if (du <= 4) return 'soon';
+  return 'later';
+}
+
+function render(events) {
+  const sorted = [...events].sort((a,b) => daysUntil(a.date) - daysUntil(b.date));
+  const brief = generateBrief(events);
+  $('brief').textContent = brief;
+
+  const urgent = sorted.filter(e => { const du = daysUntil(e.date); return du >= 0 && du <= 2; }).length;
+  const soon = sorted.filter(e => { const du = daysUntil(e.date); return du >= 3 && du <= 4; }).length;
+  $('stat-urgent').textContent = urgent;
+  $('stat-soon').textContent = soon;
+  $('stat-total').textContent = sorted.filter(e => daysUntil(e.date) >= 0).length;
+
+  const container = $('deadlines');
+  if (!sorted.length) {
+    container.innerHTML = '<p class="empty">No deadlines found.</p>';
+    return;
+  }
+  container.innerHTML = sorted.map(e => {
+    const du = daysUntil(e.date);
+    const cls = chipClass(du);
+    const label = dayLabel(du);
+    const course = e.course || 'Course';
+    const title = e.title || 'Event';
+    const dateDisplay = new Date(e.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    return `<div class="deadline-row">
+      <span class="chip ${cls}">${label}</span>
+      <div class="deadline-info">
+        <div class="deadline-title">${escapeHTML(title)}</div>
+        <div class="deadline-course">${escapeHTML(course)} · ${dateDisplay}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function sync() {
+  const url = localStorage.getItem(STORAGE_KEY);
+  if (!url) { showSetup(); return; }
+  $('sync').disabled = true;
+  $('error').style.display = 'none';
+  $('status').textContent = 'Syncing…';
+  try {
+    const ics = await fetchFeed(url);
+    const raw = parseICS(ics);
+    const events = normaliseEvents(raw);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(events));
+    localStorage.setItem(CACHE_TIME, String(Date.now()));
+    render(events);
+    $('status').textContent = `Synced ${events.length} events at ${new Date().toLocaleTimeString()}`;
+  } catch (e) {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      render(JSON.parse(cached));
+      $('error').textContent = 'Sync failed (' + e.message + '). Showing cached data.';
+      $('error').style.display = 'block';
+    } else {
+      $('error').textContent = 'Sync failed: ' + e.message + '. Check your feed URL.';
+      $('error').style.display = 'block';
+    }
+  } finally {
+    $('sync').disabled = false;
+  }
+}
+
+function showSetup() {
+  $('setup').style.display = 'block';
+  $('dashboard').style.display = 'none';
+}
+function showDashboard() {
+  $('setup').style.display = 'none';
+  $('dashboard').style.display = 'block';
+}
+
+$('save-url').onclick = () => {
+  const url = $('feed-url').value.trim();
+  if (!url || !url.includes('.ics')) {
+    alert('Please paste a valid .ics URL');
+    return;
+  }
+  localStorage.setItem(STORAGE_KEY, url);
+  showDashboard();
+  sync();
+};
+
+$('sync').onclick = sync;
+
+$('copy').onclick = () => {
+  navigator.clipboard.writeText($('brief').textContent);
+  $('copy').textContent = 'Copied ✓';
+  setTimeout(() => $('copy').textContent = 'Copy brief', 1500);
+};
+
+$('change-url').onclick = () => {
+  if (confirm('Change feed URL? Your cached deadlines will be replaced on next sync.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    $('feed-url').value = '';
+    showSetup();
+  }
+};
+
+(function init() {
+  const url = localStorage.getItem(STORAGE_KEY);
+  if (!url) { showSetup(); return; }
+  showDashboard();
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (cached) {
+    try { render(JSON.parse(cached)); } catch {}
+  }
+  sync();
+})();
+</script>
+</body>
+</html>
